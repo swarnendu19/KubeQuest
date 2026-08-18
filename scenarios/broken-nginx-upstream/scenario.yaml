@@ -1,0 +1,19 @@
+id: broken-nginx-upstream
+title: Broken Nginx Upstream
+difficulty: beginner
+estimated_minutes: 15
+technologies: [Linux, Nginx, HTTP]
+terminal_service: nginx
+services: [nginx, api]
+fault:
+  kind: upstream_port_mismatch
+  expected_root_cause: "Nginx proxies to api:8081 while the API listens on :8080"
+validation:
+  - command: "wget -qO- http://api:8080/health"
+    expected_exit_code: 0
+  - command: "wget -qO- http://localhost/health"
+    expected_exit_code: 0
+hints:
+  - "Confirm whether Nginx can reach the upstream process."
+  - "Compare the proxy_pass port with the service listening port."
+  - "The API service listens on port 8080."

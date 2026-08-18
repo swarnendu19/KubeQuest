@@ -1,0 +1,41 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: kernelquest
+      POSTGRES_USER: kernelquest
+      POSTGRES_PASSWORD: kernelquest_dev_only
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U kernelquest -d kernelquest"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    networks: [control-plane]
+
+  api:
+    build: ./api
+    environment:
+      DATABASE_URL: postgres://kernelquest:kernelquest_dev_only@postgres:5432/kernelquest?sslmode=disable
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "8080:8080"
+    volumes:
+      - //var/run/docker.sock:/var/run/docker.sock
+    networks: [control-plane]
+
+  nginx-incident-image:
+    build: ./scenarios/broken-nginx-upstream
+    image: kernelquest/nginx-incident:dev
+    profiles: [scenario-build]
+    command: ["true"]
+
+networks:
+  control-plane:
+    driver: bridge
+
+volumes:
+  postgres-data:
